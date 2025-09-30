@@ -47,4 +47,8 @@ public class WorldUtils {
         catch (Exception e) { return false; }
         return true;
     }
+
+    public static int blockToSectionCoord(int blockCoord) {
+        return blockCoord >> 4;
+    }
 }

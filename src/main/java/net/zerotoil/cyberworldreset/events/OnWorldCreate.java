@@ -25,11 +25,12 @@ public class OnWorldCreate implements Listener {
         }
         // if server is open and world is not one that is regenerating
         if (main.onJoin().isServerOpen() && !main.onWorldChange().getClosedWorlds().contains(event.getWorld().getName())) return;
-        boolean loadSpawn = false;
-        if (main.config().getLoadingType().matches("(?i)STANDARD")) loadSpawn = true;
+        final boolean loadSpawn = main.config().getLoadingType().matches("(?i)STANDARD");
         // System.out.println(loadSpawn);
-        event.getWorld().setKeepSpawnInMemory(loadSpawn);
-        event.getWorld().setAutoSave(loadSpawn);
+        main.getScheduler().runTask(() -> {
+            event.getWorld().setKeepSpawnInMemory(loadSpawn);
+            event.getWorld().setAutoSave(loadSpawn);
+        });
     }
 
 }

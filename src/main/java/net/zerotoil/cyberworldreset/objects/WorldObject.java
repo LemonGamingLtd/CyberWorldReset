@@ -5,6 +5,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
+import net.zerotoil.cyberworldreset.utilities.WorldUtils;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.boss.DragonBattle;
@@ -281,7 +282,7 @@ public class WorldObject {
         chunkCounter = 1;
         Bukkit.getLogger().info("The world is being loaded, please wait!");
         chunks = new HashMap<>();
-        getWorld().loadChunk(getWorld().getSpawnLocation().getChunk());
+        getWorld().getChunkAtAsync(getWorld().getSpawnLocation()).thenAccept(chunk -> chunk.addPluginChunkTicket(main));
         startingReset = true;
         (new WrappedRunnable() {
 
@@ -324,7 +325,8 @@ public class WorldObject {
     private void newChunkLoading(Player sender) {
         int width = main.config().getLoadRadius() * 2 + 1;
 
-        int spawnX = getWorld().getSpawnLocation().getChunk().getX(), spawnZ = getWorld().getSpawnLocation().getChunk().getZ();
+        final int spawnX = WorldUtils.blockToSectionCoord(getWorld().getSpawnLocation().getBlockX());
+        final int spawnZ = WorldUtils.blockToSectionCoord(getWorld().getSpawnLocation().getBlockZ());
 
         int counter = chunkCounter + 3;
         for (int i = chunkCounter; i < counter; i++) {
@@ -341,8 +343,7 @@ public class WorldObject {
             xChunk = chunks.get((long) chunkCounter).get(0) + spawnX;
             zChunk = chunks.get((long) chunkCounter).get(1) + spawnZ;
             //main.logger("pre: " + main.multiverse().getMVWorldManager().getMVWorld(getWorld()).isKeepingSpawnInMemory());
-            if (main.getVersion() > 14) getWorld().getChunkAt(xChunk, zChunk).addPluginChunkTicket(main);
-            else getWorld().loadChunk(xChunk, zChunk);
+            getWorld().getChunkAtAsync(xChunk, zChunk).thenAccept(chunk -> chunk.addPluginChunkTicket(main));
             //if (chunkCounter == 1) getWorld().setSpawnLocation(0, getWorld().getHighestBlockYAt(0, 0), 0);
             chunkCounter++;
         }
@@ -452,7 +453,7 @@ public class WorldObject {
                 public void run() {
                     tpPlayersBack();
                 }
-            }).runTaskLater(main, 20L * (safeWorldDelay));
+            }).runTaskLater(main, Math.max(20L, 20L * (safeWorldDelay)));
         }
 
         getWorld().setAutoSave(true);

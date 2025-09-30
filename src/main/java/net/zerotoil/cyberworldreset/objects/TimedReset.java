@@ -175,14 +175,7 @@ public class TimedReset {
         public void run() {
 
             // regen world
-            main.getScheduler().runTask(new Runnable() {
-
-                @Override
-                public void run() {
-                    main.worlds().getWorld(world).regenWorld(null);
-                }
-
-            });
+            main.getScheduler().runTask(() -> main.worlds().getWorld(world).regenWorld(null));
 
             // reruns timed reset
             (new WrappedRunnable() {

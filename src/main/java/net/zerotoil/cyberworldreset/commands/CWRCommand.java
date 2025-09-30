@@ -145,8 +145,10 @@ public class CWRCommand implements CommandExecutor {
         // confirm regeneration of world
         if (args[0].matches("(?i)confirm")) {
             if (confirmation.containsKey(player)) {
-                main.worlds().getWorld(confirmation.get(player)).regenWorld(player);
-                confirmation.remove(player);
+                main.getScheduler().runTask(() -> {
+                    main.worlds().getWorld(confirmation.get(player)).regenWorld(player);
+                    confirmation.remove(player);
+                });
             } else {
                 main.lang().getMsg("confirmation-not-required").send(player, true, new String[]{}, new String[]{});
             }
@@ -281,7 +283,7 @@ public class CWRCommand implements CommandExecutor {
 
             }).runTaskLater(main, 20L * main.config().getConfirmationSeconds());
         } else {
-            main.worlds().getWorld(worldName).regenWorld(player);
+            main.getScheduler().runTask(() -> main.worlds().getWorld(worldName).regenWorld(player));
         }
         return true;
     }
