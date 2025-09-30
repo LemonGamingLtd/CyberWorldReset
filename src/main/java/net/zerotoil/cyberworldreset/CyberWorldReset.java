@@ -1,25 +1,33 @@
 package net.zerotoil.cyberworldreset;
 
 import com.sk89q.worldguard.WorldGuard;
+import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import net.zerotoil.cyberworldreset.addons.Metrics;
 import net.zerotoil.cyberworldreset.addons.PlaceholderAPI;
-import net.zerotoil.cyberworldreset.cache.*;
+import net.zerotoil.cyberworldreset.cache.Config;
+import net.zerotoil.cyberworldreset.cache.Files;
+import net.zerotoil.cyberworldreset.cache.Lang;
+import net.zerotoil.cyberworldreset.cache.Worlds;
 import net.zerotoil.cyberworldreset.commands.CWRCommand;
 import net.zerotoil.cyberworldreset.commands.CWRTabComplete;
-import net.zerotoil.cyberworldreset.events.*;
+import net.zerotoil.cyberworldreset.events.OnDamage;
+import net.zerotoil.cyberworldreset.events.OnJoin;
+import net.zerotoil.cyberworldreset.events.OnWorldChange;
+import net.zerotoil.cyberworldreset.events.OnWorldCreate;
 import net.zerotoil.cyberworldreset.objects.Lag;
-import net.zerotoil.cyberworldreset.utilities.*;
+import net.zerotoil.cyberworldreset.utilities.LangUtils;
+import net.zerotoil.cyberworldreset.utilities.WorldUtils;
+import net.zerotoil.cyberworldreset.utilities.ZipUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Method;
 
-public final class CyberWorldReset extends JavaPlugin {
+public final class CyberWorldReset extends FoliaWrappedJavaPlugin {
 
     private Files files;
     private Config config;
@@ -46,26 +54,19 @@ public final class CyberWorldReset extends JavaPlugin {
     private int events = 0;
 
     // new enum to track detected MV version
-    public enum MultiverseVersion { NONE, V4, V5 }
+    public enum MultiverseVersion {NONE, V4, V5}
+
     private MultiverseVersion multiverseVersion = MultiverseVersion.NONE;
 
     @Override
     public void onEnable() {
-
-        if (getVersion() > 21) {
-            Bukkit.getLogger().severe("CWR v" + getDescription().getVersion() + " does not support MC version 1.21 and newer. Please update!");
-            return;
-        }
-        if (getVersion() < 8) {
-            Bukkit.getLogger().severe("CWR v" + getDescription().getVersion() + " does not support Minecraft versions older than 1.8");
-            return;
-        }
+        getLogger().info("Successfully initialized scheduler of type: " + getScheduler().getImplementationType());
 
         sendBootMSG();
         long startTime = System.currentTimeMillis();
 
         // lag initialize
-        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Lag(), 100L, 1L);
+        getScheduler().runTaskTimer(new Lag(), 100L, 1L);
 
         loadUtilities();
         loadCache();
@@ -76,7 +77,7 @@ public final class CyberWorldReset extends JavaPlugin {
         cwrTabComplete = new CWRTabComplete(this);
 
         // addons
-        new Metrics(this, 13007, this);
+        //new Metrics(this, 13007, this);
 
         // multiverse
         multiverseEnabled = getServer().getPluginManager().isPluginEnabled("Multiverse-Core");
@@ -95,11 +96,12 @@ public final class CyberWorldReset extends JavaPlugin {
             new PlaceholderAPI(this).register();
         } else placeholderAPIEnabled = false;
 
-        if (Bukkit.getPluginManager().getPlugin("WorldGuard") != null && (getVersion() > 12)) worldGuard = WorldGuard.getInstance();
+        if (Bukkit.getPluginManager().getPlugin("WorldGuard") != null && (getVersion() > 12))
+            worldGuard = WorldGuard.getInstance();
 
         // final message
         logger("&7Loaded &bCWR v" + getDescription().getVersion() + "&7 in &a" +
-                (System.currentTimeMillis() - startTime) + "ms&7.");
+            (System.currentTimeMillis() - startTime) + "ms&7.");
         logger("&b―――――――――――――――――――――――――――――――――――――――――――――――");
     }
 
@@ -193,12 +195,15 @@ public final class CyberWorldReset extends JavaPlugin {
     public Files files() {
         return files;
     }
+
     public Config config() {
         return config;
     }
+
     public Lang lang() {
         return lang;
     }
+
     public Worlds worlds() {
         return worlds;
     }
@@ -206,6 +211,7 @@ public final class CyberWorldReset extends JavaPlugin {
     public CWRCommand cwrCommand() {
         return cwrCommand;
     }
+
     public CWRTabComplete cwrTabComplete() {
         return cwrTabComplete;
     }
@@ -213,9 +219,11 @@ public final class CyberWorldReset extends JavaPlugin {
     public LangUtils langUtils() {
         return langUtils;
     }
+
     public WorldUtils worldUtils() {
         return worldUtils;
     }
+
     public ZipUtils zipUtils() {
         return zipUtils;
     }
@@ -223,12 +231,15 @@ public final class CyberWorldReset extends JavaPlugin {
     public OnJoin onJoin() {
         return onJoin;
     }
+
     public OnWorldChange onWorldChange() {
         return onWorldChange;
     }
+
     public OnDamage onDamage() {
         return onDamage;
     }
+
     public OnWorldCreate onWorldCreate() {
         return onWorldCreate;
     }
@@ -236,6 +247,7 @@ public final class CyberWorldReset extends JavaPlugin {
     public boolean isPlaceholderAPIEnabled() {
         return placeholderAPIEnabled;
     }
+
     public boolean isMultiverseEnabled() {
         return multiverseEnabled;
     }

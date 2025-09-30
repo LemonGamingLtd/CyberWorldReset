@@ -38,7 +38,7 @@ public class OnDamage implements Listener {
         double preX = location.getX() - 1, preZ = location.getZ() - 1, postX = location.getX() + 1, postZ = location.getZ() + 1;
         double playerX = player.getLocation().getX(), playerZ = player.getLocation().getZ();
         if ((playerX < postX) && (playerX > preX) && (playerZ < postZ) && (playerZ > preZ)) {
-            player.teleport(new Location(world, location.getBlockX(), world.getHighestBlockYAt(location.getBlockX(), location.getBlockZ()), location.getZ()));
+            player.teleportAsync(new Location(world, location.getBlockX(), world.getHighestBlockYAt(location.getBlockX(), location.getBlockZ()), location.getZ()));
             event.setCancelled(true);
         }
     }

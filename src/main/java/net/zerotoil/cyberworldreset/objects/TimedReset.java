@@ -1,8 +1,8 @@
 package net.zerotoil.cyberworldreset.objects;
 
+import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -175,7 +175,7 @@ public class TimedReset {
         public void run() {
 
             // regen world
-            Bukkit.getScheduler().runTask(main, new Runnable() {
+            main.getScheduler().runTask(new Runnable() {
 
                 @Override
                 public void run() {
@@ -185,7 +185,7 @@ public class TimedReset {
             });
 
             // reruns timed reset
-            (new BukkitRunnable() {
+            (new WrappedRunnable() {
 
                 @Override
                 public void run() {

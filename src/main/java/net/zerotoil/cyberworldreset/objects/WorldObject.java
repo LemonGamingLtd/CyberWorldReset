@@ -1,20 +1,17 @@
 package net.zerotoil.cyberworldreset.objects;
 
-import com.Zrips.CMI.CMI;
-import com.onarandombox.MultiverseNetherPortals.MultiverseNetherPortals;
-import com.onarandombox.MultiversePortals.MultiversePortals;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
+import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.boss.DragonBattle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -166,7 +163,7 @@ public class WorldObject {
         long resetDelay = main.config().getWorldResetDelay();
         if (main.config().getWorldResetDelay() <= 0) resetDelay = 1;
 
-        (new BukkitRunnable() {
+        (new WrappedRunnable() {
 
             @Override
             public void run() {
@@ -247,8 +244,8 @@ public class WorldObject {
                         new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
 
                 if (!safeWorldSpawn.equalsIgnoreCase("default"))
-                    player.teleport(main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn));
-                else player.teleport(Bukkit.getWorld(safeWorld).getSpawnLocation());
+                    player.teleportAsync(main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn));
+                else player.teleportAsync(Bukkit.getWorld(safeWorld).getSpawnLocation());
 
                 main.lang().getMsg("teleported-safe-world").send(player, true,
                         new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
@@ -286,7 +283,7 @@ public class WorldObject {
         chunks = new HashMap<>();
         getWorld().loadChunk(getWorld().getSpawnLocation().getChunk());
         startingReset = true;
-        (new BukkitRunnable() {
+        (new WrappedRunnable() {
 
             @Override
             public void run() {
@@ -350,7 +347,7 @@ public class WorldObject {
             chunkCounter++;
         }
 
-        (new BukkitRunnable() {
+        (new WrappedRunnable() {
 
             @Override
             public void run() {
@@ -407,14 +404,14 @@ public class WorldObject {
             if (!player.isOnline()) continue;
             main.lang().getMsg("teleporting-back").send(player, true, new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
 
-            player.teleport(spawnPoint);
+            player.teleportAsync(spawnPoint);
             main.lang().getMsg("teleported-back").send(player, true, new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
         }
 
         tpPlayers.clear();
 
         // disables onDamage 1.8 fixer
-        (new BukkitRunnable() {
+        (new WrappedRunnable() {
 
             @Override
             public void run() {
@@ -450,7 +447,7 @@ public class WorldObject {
         if (safeWorldDelay == -1) {
             // nothing
         } else {
-            (new BukkitRunnable() {
+            (new WrappedRunnable() {
                 @Override
                 public void run() {
                     tpPlayersBack();
@@ -464,10 +461,10 @@ public class WorldObject {
         chunkCounter = -2;
 
         // refresh CMI stuff
-        if (Bukkit.getPluginManager().isPluginEnabled("CMI")) {
-            if (main.config().isCmiWarpSave()) CMI.getInstance().getWarpManager().load();
-            if (main.config().isCmiPortalRefresh()) CMI.getInstance().getPortalManager().load();
-        }
+        //if (Bukkit.getPluginManager().isPluginEnabled("CMI")) {
+        //    if (main.config().isCmiWarpSave()) CMI.getInstance().getWarpManager().load();
+        //    if (main.config().isCmiPortalRefresh()) CMI.getInstance().getPortalManager().load();
+        //}
 
         // refresh MV portals
         if (main.config().isMvPortalRefresh()) {
@@ -519,7 +516,7 @@ public class WorldObject {
         if (!savedWorlds.exists()) savedWorlds.mkdirs();
         if (saveWorld) {
             getWorld().save();
-            (new BukkitRunnable() {
+            (new WrappedRunnable() {
                 @Override
                 public void run() {
                     zipSavedWorld(player);
@@ -531,7 +528,7 @@ public class WorldObject {
     }
 
     private boolean zipSavedWorld(Player player) {
-        Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
+        main.getScheduler().runTaskAsynchronously(() -> {
             try {
                 main.zipUtils().zip(worldName);
                 main.lang().getMsg("save-success").send(player, true, new String[]{"world"}, new String[]{worldName});

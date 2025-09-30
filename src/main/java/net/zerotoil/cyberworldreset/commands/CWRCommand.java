@@ -1,5 +1,6 @@
 package net.zerotoil.cyberworldreset.commands;
 
+import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
 import net.zerotoil.cyberworldreset.objects.WorldObject;
 import org.bukkit.Bukkit;
@@ -8,7 +9,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -269,7 +269,7 @@ public class CWRCommand implements CommandExecutor {
             String time = main.langUtils().formatTime(main.config().getConfirmationSeconds());
             main.lang().getMsg("confirm-regen").send(player, true, new String[]{"world", "time"}, new String[]{worldName, time});
 
-            (new BukkitRunnable() {
+            (new WrappedRunnable() {
 
                 @Override
                 public void run() {

@@ -6,14 +6,14 @@
 
     <groupId>net.zerotoil</groupId>
     <artifactId>CyberWorldReset</artifactId>
-    <version>0.6.4</version>
+    <version>0.7.0</version>
     <packaging>jar</packaging>
 
     <name>CyberWorldReset</name>
     <description>Regenerate your world at an interval time</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <url>zerotoil.net</url>
@@ -23,7 +23,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.14.0</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -32,7 +32,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -45,6 +45,16 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>me.nahu.scheduler</pattern>
+                            <shadedPattern>${groupId}.cyberworldreset.libs.scheduler</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>net.lingala.zip4j</pattern>
+                            <shadedPattern>${groupId}.cyberworldreset.libs.zip4j</shadedPattern>
+                        </relocation>
+                    </relocations>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
@@ -94,24 +104,18 @@
             <id>onarandombox</id>
             <url>https://repo.onarandombox.com/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.16.2-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.21.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
-        </dependency>
-        <dependency>
-            <groupId>net.lingala.zip4j</groupId>
-            <artifactId>zip4j</artifactId>
-            <version>2.11.4</version>
         </dependency>
         <dependency>
             <groupId>com.onarandombox.multiversecore</groupId>
@@ -155,20 +159,24 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- CMI Plugin -->
-        <dependency>
-            <groupId>com.Zrips</groupId>
-            <artifactId>CMI</artifactId>
-            <version>9.1.0.4</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- CMI Lib -->
         <dependency>
-            <groupId>net.Zrips</groupId>
+            <groupId>com.github.Zrips</groupId>
             <artifactId>CMILib</artifactId>
-            <version>1.1.0.4</version>
+            <version>1.4.7.4</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.NahuLD.folia-scheduler-wrapper</groupId>
+            <artifactId>folia-scheduler-wrapper</artifactId>
+            <version>v0.0.3</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>2.11.4</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

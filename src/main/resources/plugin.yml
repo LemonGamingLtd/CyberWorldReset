@@ -8,6 +8,7 @@ loadafter: [ Multiverse-Core ]
 authors: [ Kihsomray, CroaBeast ]
 description: Regenerate your world at an interval time
 website: zerotoil.net
+folia-supported: true
 
 commands:
   cwr:

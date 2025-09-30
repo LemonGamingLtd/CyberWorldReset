@@ -58,7 +58,7 @@ public class OnJoin implements Listener {
             Location lUp = new Location(wo.getWorld(), lAt.getX(), lAt.getY() + 1, lAt.getZ());
 
             if (!lAt.getBlock().getType().isAir() || !lUp.getBlock().getType().isAir() || lDown.getBlock().isPassable())
-                player.teleport(new Location (wo.getWorld(), lAt.getX(), wo.getWorld().getHighestBlockYAt(lAt.getBlockX(), lAt.getBlockZ()), lAt.getZ()));
+                player.teleportAsync(new Location (wo.getWorld(), lAt.getX(), wo.getWorld().getHighestBlockYAt(lAt.getBlockX(), lAt.getBlockZ()), lAt.getZ()));
 
         }
 
