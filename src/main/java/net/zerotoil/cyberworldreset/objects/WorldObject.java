@@ -175,7 +175,10 @@ public class WorldObject {
                 finalWorld.environment(environment);
 
                 if (!lastSaved) {
-                    if (randomSeed) seed = new Random().nextLong();
+                    if (randomSeed) {
+                        seed = new Random().nextLong();
+                    }
+                    System.out.println("SEED: " + seed);
                     finalWorld.seed(seed);
                     continueRegen(sender, finalWorld);
                 } else {
@@ -245,8 +248,8 @@ public class WorldObject {
                         new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
 
                 if (!safeWorldSpawn.equalsIgnoreCase("default"))
-                    player.teleportAsync(main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn));
-                else player.teleportAsync(Bukkit.getWorld(safeWorld).getSpawnLocation());
+                    player.teleportAsync(main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn)).join();
+                else player.teleportAsync(Bukkit.getWorld(safeWorld).getSpawnLocation()).join();
 
                 main.lang().getMsg("teleported-safe-world").send(player, true,
                         new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
