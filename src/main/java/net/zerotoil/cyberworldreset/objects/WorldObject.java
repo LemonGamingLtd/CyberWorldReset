@@ -6,17 +6,28 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
 import net.zerotoil.cyberworldreset.utilities.WorldUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
 import org.bukkit.boss.DragonBattle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.codehaus.plexus.util.FileUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
 
 public class WorldObject {
 
@@ -54,7 +65,7 @@ public class WorldObject {
     private final HashMap<String, TimedReset> timedResets = new HashMap<>();
 
     // teleport player module
-    private final  List<Player> tpPlayers = new ArrayList<>();
+    private final List<Player> tpPlayers = new ArrayList<>();
 
     // chunk loading cache
     private final long loadDelay;
@@ -149,8 +160,9 @@ public class WorldObject {
 
         // deletes old world files
         try {
-            FileUtils.deleteDirectory(new File(main.getDataFolder().getParentFile().getParentFile(), worldName));
+            FileUtils.forceDelete(world.getWorldFolder());
         } catch (Exception e) {
+            e.printStackTrace();
             return regenFail("file-delete-failed", sender);
         }
 
@@ -178,8 +190,6 @@ public class WorldObject {
                     if (randomSeed) {
                         seed = new Random().nextLong();
                     }
-                    System.out.println("SEED: " + seed);
-                    finalWorld.seed(seed);
                     continueRegen(sender, finalWorld);
                 } else {
                     rollbackWorld(sender, finalWorld);
@@ -229,8 +239,7 @@ public class WorldObject {
                     if (!player.getWorld().getName().equalsIgnoreCase(worldName)) continue;
                     player.kickPlayer(main.lang().getMsg("kick-reason").toString(false).replace("{world}", worldName));
                 }
-        }
-        else {
+        } else {
             if (getWorld().getEnvironment().toString().contains("THE_END") && main.getVersion() > 12) {
                 DragonBattle dBattle = getWorld().getEnderDragonBattle();
                 if (dBattle != null) dBattle.getBossBar().removeAll();
@@ -241,25 +250,27 @@ public class WorldObject {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!player.getWorld().getName().equalsIgnoreCase(worldName)) continue;
 
-                if (player.isDead()) player.kickPlayer(main.lang().getMsg("kick-reason").toString(false).replace("{world}", worldName));
+                if (player.isDead())
+                    player.kickPlayer(main.lang().getMsg("kick-reason").toString(false).replace("{world}", worldName));
 
                 tpPlayers.add(player);
                 main.lang().getMsg("teleporting-safe-world").send(player, true,
-                        new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
+                    new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
 
                 if (!safeWorldSpawn.equalsIgnoreCase("default"))
                     player.teleportAsync(main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn)).join();
                 else player.teleportAsync(Bukkit.getWorld(safeWorld).getSpawnLocation()).join();
 
                 main.lang().getMsg("teleported-safe-world").send(player, true,
-                        new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
+                    new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
             }
             main.onWorldChange().addClosedWorld(worldName);
         }
     }
 
     private boolean regenFail(String msgKey, Player player) {
-        if (msgKey != null) main.lang().getMsg(msgKey).send(player, true, new String[]{"world"}, new String[]{worldName});
+        if (msgKey != null)
+            main.lang().getMsg(msgKey).send(player, true, new String[]{"world"}, new String[]{worldName});
         main.onWorldChange().removeClosedWorld(worldName);
         main.onJoin().setServerOpen(true);
         resetting = false;
@@ -360,7 +371,7 @@ public class WorldObject {
 
             }
 
-        }).runTaskLater(main, loadDelay * Math.round(20/Lag.getLowerTPS()));
+        }).runTaskLater(main, loadDelay * Math.round(20 / Lag.getLowerTPS()));
 
     }
 
@@ -371,8 +382,9 @@ public class WorldObject {
         else if (main.config().getLang().equalsIgnoreCase("ru")) loading = "Загрузка";
         if (main.config().isDetailedMessages() && main.getVersion() > 12)
             System.out.printf(loading + " [%s]: %3d%% | Chunk: %5d/%d | ETA: %-10s | TPS %.2f%n", worldName, Math.round((chunkNumber + 0.0) / (width * width) * 100), chunkNumber,
-                    width * width, ChatColor.stripColor(main.langUtils().formatTime(Math.round((((width * width) - chunkNumber) * (loadDelay / 20.0) * (20.0 / tps)) / 3))), tps);
-        else main.logger(loading + " [" + worldName + "]: " + Math.round((chunkNumber + 0.0) / (width * width) * 100) + "%");
+                width * width, ChatColor.stripColor(main.langUtils().formatTime(Math.round((((width * width) - chunkNumber) * (loadDelay / 20.0) * (20.0 / tps)) / 3))), tps);
+        else
+            main.logger(loading + " [" + worldName + "]: " + Math.round((chunkNumber + 0.0) / (width * width) * 100) + "%");
     }
 
     public long getTimeRemaining() {
@@ -442,7 +454,8 @@ public class WorldObject {
         // sends successful regen to all players
         if ((message.size() != 1) || !message.get(0).equalsIgnoreCase(""))
             for (Player player : Bukkit.getOnlinePlayers())
-                for (String i : message) player.sendMessage(main.langUtils().getColor(i.replace("{world}", worldName), true));
+                for (String i : message)
+                    player.sendMessage(main.langUtils().getColor(i.replace("{world}", worldName), true));
 
         sendCommands(false);
 
@@ -478,7 +491,8 @@ public class WorldObject {
                 try {
                     Method m = portals.getClass().getMethod("reloadConfigs");
                     m.invoke(portals);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
 
             Plugin netherportals = Bukkit.getServer().getPluginManager().getPlugin("Multiverse-NetherPortals");
@@ -486,7 +500,8 @@ public class WorldObject {
                 try {
                     Method m = netherportals.getClass().getMethod("loadConfig");
                     m.invoke(netherportals);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
 
         }
@@ -516,7 +531,7 @@ public class WorldObject {
     public boolean saveWorld(Player player, boolean saveWorld) {
 
         main.lang().getMsg("saving-world").send(player, true, new String[]{"world"}, new String[]{getWorldName()});
-        File savedWorlds = new File(main.getDataFolder(),"saved_worlds");
+        File savedWorlds = new File(main.getDataFolder(), "saved_worlds");
         if (!savedWorlds.exists()) savedWorlds.mkdirs();
         if (saveWorld) {
             getWorld().save();
@@ -527,8 +542,7 @@ public class WorldObject {
                 }
             }).runTaskLater(main, 20L * Math.round(20 / Lag.getTPS()));
             return true;
-        }
-        else return zipSavedWorld(player);
+        } else return zipSavedWorld(player);
     }
 
     private boolean zipSavedWorld(Player player) {
@@ -544,7 +558,7 @@ public class WorldObject {
         return true;
     }
 
-    public void rollbackWorld(Player player, WorldCreator finalWorld){
+    public void rollbackWorld(Player player, WorldCreator finalWorld) {
 
         Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
             main.lang().getMsg("rolling-back-world").send(player, true, new String[]{"world"}, new String[]{worldName});
@@ -673,26 +687,33 @@ public class WorldObject {
     public World getWorld() {
         return Bukkit.getWorld(worldName);
     }
+
     public boolean isEnabled() {
         return enabled;
     }
+
     public String getWorldName() {
         return worldName;
     }
+
     public List<String> getTime() {
         return time;
     }
+
     public List<String> getMessage() {
         return message;
     }
+
     public long getSeed() {
         return seed;
     }
+
     public String getGenerator() {
         if (generator == null) return "DEFAULT";
         if (generator.contains("BukkitChunkGeneratorWrapper@")) return generator.substring(0, generator.length() - 36);
         return generator;
     }
+
     public String getEnvironment() {
         return environment.toString();
     }
@@ -700,51 +721,67 @@ public class WorldObject {
     public String getDefaultGamemode() {
         return defaultGamemode;
     }
+
     public List<String> getCommands() {
         return commands;
     }
+
     public boolean isSafeWorldEnabled() {
         return safeWorldEnabled;
     }
+
     public String getSafeWorld() {
         return safeWorld;
     }
+
     public long getSafeWorldDelay() {
         return safeWorldDelay;
     }
+
     public String getSafeWorldSpawn() {
         return safeWorldSpawn;
     }
+
     public boolean isWarningEnabled() {
         return warningEnabled;
     }
+
     public List<String> getWarningMessage() {
         return warningMessage;
     }
+
     public List<Long> getWarningTime() {
         return warningTime;
     }
+
     public String getWarningTitle() {
         return warningTitle;
     }
+
     public String getWarningSubtitle() {
         return warningSubtitle;
     }
+
     public List<Integer> getWarningTitleFade() {
         return warningTitleFade;
     }
+
     public boolean isLastSaved() {
         return lastSaved;
     }
+
     public boolean isResetting() {
         return resetting;
     }
+
     public HashMap<String, TimedReset> getTimedResets() {
         return timedResets;
     }
+
     public int getChunkCounter() {
         return chunkCounter;
     }
+
     public boolean isStartingReset() {
         return startingReset;
     }
@@ -752,18 +789,23 @@ public class WorldObject {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
+
     public void setWorldName(String worldName) {
         this.worldName = worldName;
     }
+
     public void setWorld(World world) {
         this.world = world;
     }
+
     public void setTime(List<String> time) {
         this.time = time;
     }
+
     public void setMessage(List<String> message) {
         this.message = message;
     }
+
     public void setSeed(String seed) {
         if (seed.equalsIgnoreCase("default")) this.seed = getWorld().getSeed();
         if (seed.equalsIgnoreCase("random")) randomSeed = true;
@@ -787,6 +829,7 @@ public class WorldObject {
             this.environment = getWorld().getEnvironment();
         }
     }
+
     public void setGenerator(String generator) {
         if (generator == null) return;
         if (generator.equalsIgnoreCase("default")) {
@@ -804,18 +847,23 @@ public class WorldObject {
     public void setDefaultGamemode(String defaultGamemode) {
         this.defaultGamemode = defaultGamemode;
     }
+
     public void setCommands(List<String> commands) {
         this.commands = commands;
     }
+
     public void setInitialCommands(List<String> initialCommands) {
         this.initialCommands = initialCommands;
     }
+
     public void setSafeWorldEnabled(boolean safeWorldEnabled) {
         this.safeWorldEnabled = safeWorldEnabled;
     }
+
     public void setSafeWorld(String safeWorld) {
         this.safeWorld = safeWorld;
     }
+
     public void setSafeWorldDelay(long safeWorldDelay) {
         if (safeWorldDelay >= -1) {
             this.safeWorldDelay = safeWorldDelay;
@@ -823,27 +871,35 @@ public class WorldObject {
             this.safeWorldDelay = 0;
         }
     }
+
     public void setSafeWorldSpawn(String safeWorldSpawn) {
         this.safeWorldSpawn = safeWorldSpawn;
     }
+
     public void setWarningEnabled(boolean warningEnabled) {
         this.warningEnabled = warningEnabled;
     }
+
     public void setWarningMessage(List<String> warningMessage) {
         this.warningMessage = warningMessage;
     }
+
     public void setWarningTime(List<Long> warningTime) {
         this.warningTime = (ArrayList<Long>) warningTime;
     }
+
     public void setWarningTitle(String warningTitle) {
         this.warningTitle = warningTitle;
     }
+
     public void setWarningSubtitle(String warningSubtitle) {
         this.warningSubtitle = warningSubtitle;
     }
+
     public void setWarningTitleFade(List<Integer> warningTitleFade) {
         this.warningTitleFade = warningTitleFade;
     }
+
     public void setLastSaved(boolean lastSaved) {
         this.lastSaved = lastSaved;
     }
