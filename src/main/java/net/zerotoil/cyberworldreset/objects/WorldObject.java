@@ -296,7 +296,7 @@ public class WorldObject {
         chunkCounter = 1;
         Bukkit.getLogger().info("The world is being loaded, please wait!");
         chunks = new HashMap<>();
-        getWorld().getChunkAtAsync(getWorld().getSpawnLocation()).thenAccept(chunk -> chunk.addPluginChunkTicket(main));
+        WorldUtils.getChunkAt(getWorld().getSpawnLocation()).thenAccept(chunk -> chunk.addPluginChunkTicket(main));
         startingReset = true;
         (new WrappedRunnable() {
 
@@ -357,7 +357,7 @@ public class WorldObject {
             xChunk = chunks.get((long) chunkCounter).get(0) + spawnX;
             zChunk = chunks.get((long) chunkCounter).get(1) + spawnZ;
             //main.logger("pre: " + main.multiverse().getMVWorldManager().getMVWorld(getWorld()).isKeepingSpawnInMemory());
-            getWorld().getChunkAtAsync(xChunk, zChunk).thenAccept(chunk -> chunk.addPluginChunkTicket(main));
+            WorldUtils.getChunkAt(getWorld(), xChunk, zChunk).thenAccept(chunk -> chunk.addPluginChunkTicket(main));
             //if (chunkCounter == 1) getWorld().setSpawnLocation(0, getWorld().getHighestBlockYAt(0, 0), 0);
             chunkCounter++;
         }

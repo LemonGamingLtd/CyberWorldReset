@@ -2,7 +2,9 @@ package net.zerotoil.cyberworldreset.utilities;
 
 import net.zerotoil.cyberworldreset.CyberWorldReset;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 
 public class WorldUtils {
 
@@ -59,6 +62,22 @@ public class WorldUtils {
             player.teleportAsync(location).join();
         } catch (NoSuchMethodError ignored) {
             player.teleport(location); // cobblemon workaround
+        }
+    }
+
+    public static CompletableFuture<Chunk> getChunkAt(@NotNull Location location) {
+        if (location.getWorld() == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        final Chunk chunk = location.getChunk();
+        return getChunkAt(location.getWorld(), chunk.getX(), chunk.getZ());
+    }
+
+    public static CompletableFuture<Chunk> getChunkAt(@NotNull World world, int chunkX, int chunkZ) {
+        try {
+            return world.getChunkAtAsync(chunkX, chunkZ);
+        } catch (NoSuchMethodError error) {
+            return CompletableFuture.completedFuture(world.getChunkAt(chunkX, chunkZ));
         }
     }
 }
