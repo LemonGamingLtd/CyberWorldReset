@@ -258,8 +258,8 @@ public class WorldObject {
                     new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
 
                 if (!safeWorldSpawn.equalsIgnoreCase("default"))
-                    player.teleportAsync(main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn)).join();
-                else player.teleportAsync(Bukkit.getWorld(safeWorld).getSpawnLocation()).join();
+                    WorldUtils.teleport(player, main.worldUtils().getLocationFromString(safeWorld, safeWorldSpawn));
+                else WorldUtils.teleport(player, Bukkit.getWorld(safeWorld).getSpawnLocation());
 
                 main.lang().getMsg("teleported-safe-world").send(player, true,
                     new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
@@ -420,7 +420,7 @@ public class WorldObject {
             if (!player.isOnline()) continue;
             main.lang().getMsg("teleporting-back").send(player, true, new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
 
-            player.teleportAsync(spawnPoint);
+            WorldUtils.teleport(player, spawnPoint);
             main.lang().getMsg("teleported-back").send(player, true, new String[]{"world", "safeWorld"}, new String[]{worldName, safeWorld});
         }
 

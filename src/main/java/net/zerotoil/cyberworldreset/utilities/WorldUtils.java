@@ -3,6 +3,8 @@ package net.zerotoil.cyberworldreset.utilities;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -50,5 +52,13 @@ public class WorldUtils {
 
     public static int blockToSectionCoord(int blockCoord) {
         return blockCoord >> 4;
+    }
+
+    public static void teleport(@NotNull Player player, @NotNull Location location) {
+        try {
+            player.teleportAsync(location).join();
+        } catch (NoSuchMethodError ignored) {
+            player.teleport(location); // cobblemon workaround
+        }
     }
 }
