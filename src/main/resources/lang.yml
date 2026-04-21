@@ -65,6 +65,7 @@ messages:
   confirmation-expired: '&cConfirmation for regenerating "{world}" has expired!'
   confirmation-not-required: '&cYou have nothing to confirm.'
   invalid-command: '&cIncorrect use of arguments!'
+  invalid-cron: '&cThat cron expression is invalid: &7{cron}&c. Use 5 fields like &70 0 1 * *&c.'
   setting-set-failed: '&cFailed to write the setting to the world config.'
   setting-set-success: '&aThe setting has been updated successfully.'
   custom-generator-warning: '&6Please make sure to add this generator to bukkit.yml, otherwise chunks can get messy after a reboot.'
@@ -78,7 +79,7 @@ messages:
   info-environment: 'Environment: {environment}'
   info-headers:
     - 'Basic Info'
-    - 'Timers'
+    - 'Cron Schedules'
     - 'Messages'
     - 'Safe World'
     - 'Warnings'
@@ -112,7 +113,7 @@ placeholder-api:
   reset-status:
     countdown: '&aReset in: {formattedTime}'
     # internal placeholders: {seconds} {formattedTime} {world}
-    no-running-timers: '&cNo running timers' # {world}
+    no-running-timers: '&cNo running cron schedules' # {world}
     initializing: '&6Initializing...' # {world}
     starting: '&eStarting...' # {world}
     progress: '&aETA: {formattedTime} ({chunkNumber}/{chunkTotal}) [{percent}%]'

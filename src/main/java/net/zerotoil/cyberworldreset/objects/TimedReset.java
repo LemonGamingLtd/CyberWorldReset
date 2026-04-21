@@ -1,207 +1,145 @@
 package net.zerotoil.cyberworldreset.objects;
 
+import com.cronutils.model.Cron;
+import com.cronutils.model.CronType;
+import com.cronutils.model.definition.CronDefinition;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.model.time.ExecutionTime;
+import com.cronutils.parser.CronParser;
 import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
-import org.bukkit.Bukkit;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 
 // used for resetting worlds at the correct timing
 public class TimedReset {
 
-    private CyberWorldReset main;
-    private String world;
-    private String unformatted;
-    private String[] dateTimeInterval;
+    private static final CronDefinition CRON_DEFINITION = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
+    private static final CronParser CRON_PARSER = new CronParser(CRON_DEFINITION);
+
+    private final CyberWorldReset main;
+    private final String world;
+    private final String cronExpression;
+    private final ExecutionTime executionTime;
+    private final ZoneId zoneId = ZoneId.systemDefault();
+
     private Timer timer = new Timer();
-    private ArrayList<Timer> warningTimers = new ArrayList<>();
-
-    private String[] date;
-    private String[] time;
-    private String unformattedInterval = null;
-    private long intervalSeconds;
-
-    private List<Long> warningSeconds = new ArrayList<>();
+    private final ArrayList<Timer> warningTimers = new ArrayList<>();
+    private final List<Long> warningSeconds = new ArrayList<>();
 
     private long resetTime;
-    private long loadDelay;
 
-    public TimedReset(CyberWorldReset main, String world, String time, ArrayList<Long> warningSeconds) {
-
+    public TimedReset(CyberWorldReset main, String world, String cronExpression, ArrayList<Long> warningSeconds) {
         this.main = main;
         this.world = world;
-        unformatted = time;
-        loadDelay = 10;
-        if (warningSeconds != null) {
-            this.warningSeconds = warningSeconds;
-        }
-        try {
-            formatTime(false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        this.cronExpression = cronExpression.trim();
+        this.executionTime = ExecutionTime.forCron(parseCron(this.cronExpression));
+        if (warningSeconds != null) this.warningSeconds.addAll(warningSeconds);
+        scheduleNextRun(false);
     }
 
-    public void formatTime(boolean cancelTimer) throws ParseException {
+    public static boolean isValidCronExpression(String cronExpression) {
+        try {
+            parseCron(cronExpression);
+            return true;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
 
-        if (cancelTimer) cancelTimer();
+    private static Cron parseCron(String cronExpression) {
+        Cron cron = CRON_PARSER.parse(cronExpression.trim());
+        cron.validate();
+        return cron;
+    }
+
+    public void scheduleNextRun(boolean cancelExistingTimer) {
+        if (cancelExistingTimer) cancelTimer();
+        cancelWarningTimers();
         timer = new Timer();
 
-        dateTimeInterval = unformatted.split(" ");
-
-        date = dateTimeInterval[0].split("-");
-        time = dateTimeInterval[1].split(":");
-
-        Calendar cal = Calendar.getInstance();
-
-        String yearNow = new SimpleDateFormat("yyyy").format(cal.getTime());
-        String monthNow = new SimpleDateFormat("MM").format(cal.getTime());
-        String dayNow = new SimpleDateFormat("dd").format(cal.getTime());
-
-        String hourNow = new SimpleDateFormat("HH").format(cal.getTime());
-        String minuteNow = new SimpleDateFormat("mm").format(cal.getTime());
-        String secondNow = new SimpleDateFormat("ss").format(cal.getTime());
-
-        //System.out.println(yearNow + " " + monthNow + " " + dayNow + " " + hourNow + ":" + minuteNow);
-        int secondNowInt = Integer.parseInt(secondNow);
-
-        // if using current time
-        if (date[0].equals("****")) date[0] = yearNow;
-        if (date[1].equals("**")) date[1] = monthNow;
-        if (date[2].equals("**")) date[2] = dayNow;
-
-        if (time[0].equals("**")) time[0] = hourNow;
-        if (time[1].equals("**")) time[1] = minuteNow;
-
-        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date startDate = format.parse(yearNow + "/" + monthNow + "/" + dayNow + " " + hourNow + ":" + minuteNow + ":" + secondNow);
-        Date endDate = format.parse(date[0] + "/" + date[1] + "/" + date[2] + " " + time[0] + ":" + time[1] + ":00");
-        long difference = endDate.getTime() - startDate.getTime();
-
-        if ((dateTimeInterval.length == 3) && (endDate.getTime() < startDate.getTime())) {
-            unformattedInterval = dateTimeInterval[2];
-
-            int preTimeInterval = Integer.parseInt(unformattedInterval.replaceAll("[^0-9]", ""));
-            char intervalFormatter = unformattedInterval.charAt((preTimeInterval + "").length());
-
-            switch (intervalFormatter) {
-                case 'm':
-
-                    intervalSeconds = (preTimeInterval * 60L) - Math.abs(Math.round(difference / 1000.0) % (preTimeInterval * 60L));
-                    break;
-                case 'h':
-                    intervalSeconds = (preTimeInterval * 3600L) - Math.abs(Math.round(difference / 1000.0) % (preTimeInterval * 3600L));
-                    break;
-                case 'd':
-                    intervalSeconds = (preTimeInterval * 86400L) - Math.abs(Math.round(difference / 1000.0) % (preTimeInterval * 86400L));
-                    break;
-                case 'M':
-                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy MM dd ss");
-
-                    // current time
-                    // interval
-
-
-                    String endDay = date[2];
-                    if (Month.of(checkZero((Integer.parseInt(date[1]) + preTimeInterval) % 12)).length(false) < Integer.parseInt(date[2])) {
-
-                        endDay = Month.of(checkZero((Integer.parseInt(date[1]) + preTimeInterval) % 12)).length(false) + "";
-
-                    }
-
-                    String endDateString = date[0] + " " + doubleDigits(toShort(date[1]) + preTimeInterval) + " " + date[2];
-                    if ((preTimeInterval + toShort(date[1])) > 12) {
-
-                        endDateString = (toShort(date[0]) + (preTimeInterval + toShort(date[1]) - checkZero((preTimeInterval + toShort(date[1])) % 12)) / 12) + " " +
-                                doubleDigits(checkZero((toShort(date[1]) + preTimeInterval) % 12)) + " " + endDay;
-
-                    }
-
-                    LocalDate startDate2 = LocalDate.parse(date[0] + " " + date[1] + " " + date[2] + " " + secondNow, dtf);
-                    LocalDate endDate2 = LocalDate.parse(endDateString + " 00", dtf);
-                    intervalSeconds = Duration.between(startDate2.atStartOfDay(), endDate2.atStartOfDay()).toDays() * 86400;
-                    //System.out.println(intervalSeconds);
-                    break;
-
-                default:
-                    break;
-            }
-
-        } else {
-
-            intervalSeconds = difference / 1000;
-
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        Optional<ZonedDateTime> nextExecution = executionTime.nextExecution(now);
+        if (nextExecution.isEmpty()) {
+            resetTime = 0;
+            main.getLogger().warning("No future execution found for world \"" + world + "\" using cron \"" + cronExpression + "\".");
+            return;
         }
 
-        //System.out.println(time[0]);
-
-        if (intervalSeconds <= 0) return;
-
-        resetTime = (intervalSeconds * 1000) + System.currentTimeMillis();
-
-        if ((warningSeconds.size() > 0) && main.worlds().getWorld(world).isWarningEnabled()) {
-            warningTimers.clear();
-            int a = 0;
-            for (long i : warningSeconds) {
-                if (intervalSeconds < i) continue;
-                long runIn = timeToReset() - i;
-                if (intervalSeconds == i) runIn = 0;
-                warningTimers.add(new Timer());
-                warningTimers.get(a).schedule((new TimerTask() {
-                    public void run() {
-                        try {
-                            main.worlds().getWorld(world).sendWarning(unformatted);
-                        } catch (Exception e) {
-                            // nothing
-                        }
-                        warningTimers.get(0).cancel();
-                        warningTimers.get(0).purge();
-                    }
-                }), 1000L * runIn);
-                a++;
-            }
+        long delayMillis = Duration.between(now, nextExecution.get()).toMillis();
+        if (delayMillis <= 0) {
+            resetTime = 0;
+            return;
         }
-        timer.schedule(new MyTimeTask(), intervalSeconds * 1000);
 
+        resetTime = System.currentTimeMillis() + delayMillis;
+        scheduleWarningTimers(delayMillis);
+        timer.schedule(new MyTimeTask(), delayMillis);
+        main.getLogger().info("Scheduled world \"" + world + "\" with cron \"" + cronExpression + "\" for " + nextExecution.get() + ".");
+    }
+
+    private void scheduleWarningTimers(long delayMillis) {
+        if (warningSeconds.isEmpty()) return;
+        if (!main.worlds().getWorld(world).isWarningEnabled()) return;
+
+        long secondsUntilReset = Math.max(0L, delayMillis / 1000L);
+        for (long warningSecond : warningSeconds) {
+            if (secondsUntilReset < warningSecond) continue;
+
+            long runInSeconds = Math.max(0L, secondsUntilReset - warningSecond);
+            Timer warningTimer = new Timer();
+            warningTimers.add(warningTimer);
+            warningTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        main.worlds().getWorld(world).sendWarning(cronExpression);
+                    } catch (Exception ignored) {
+                    } finally {
+                        warningTimer.cancel();
+                        warningTimer.purge();
+                    }
+                }
+            }, runInSeconds * 1000L);
+        }
     }
 
     private class MyTimeTask extends TimerTask {
 
+        @Override
         public void run() {
-
-            // regen world
+            main.getLogger().info("Running scheduled reset for world \"" + world + "\" from cron \"" + cronExpression + "\".");
             main.getScheduler().runTask(() -> main.worlds().getWorld(world).regenWorld(null));
 
-            // reruns timed reset
             (new WrappedRunnable() {
-
                 @Override
                 public void run() {
-                    try {
-                        formatTime(true);
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
+                    scheduleNextRun(true);
                 }
-
             }).runTaskLater(main, 20L * 10);
-
         }
 
     }
 
     public void cancelAllTimers() {
         cancelTimer();
+        cancelWarningTimers();
+    }
+
+    private void cancelWarningTimers() {
         if (warningTimers.isEmpty()) return;
-        for (Timer timer : warningTimers) {
-            timer.cancel();
-            timer.purge();
+        for (Timer warningTimer : warningTimers) {
+            warningTimer.cancel();
+            warningTimer.purge();
         }
+        warningTimers.clear();
     }
 
     private void cancelTimer() {
@@ -209,26 +147,9 @@ public class TimedReset {
         timer.purge();
     }
 
-    private short toShort(String string) {
-        return Short.parseShort(string);
-    }
-
-    private String doubleDigits(long number) {
-
-        if (number >= 10) return number + "";
-        return "0" + number;
-
-    }
-
-    private int checkZero(int number) {
-
-        if (number == 0) return 12;
-        return number;
-
-    }
-
     public long timeToReset() {
-        return (long) (resetTime / 1000 - (Math.floor(System.currentTimeMillis() / 1000.0)));
+        if (resetTime == 0) return 0;
+        return Math.max(0L, (resetTime - System.currentTimeMillis()) / 1000L);
     }
 
 }

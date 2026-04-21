@@ -58,6 +58,10 @@
                             <pattern>org.apache.commons.io</pattern>
                             <shadedPattern>${groupId}.cyberworldreset.libs.commons.io</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>com.cronutils</pattern>
+                            <shadedPattern>${groupId}.cyberworldreset.libs.cronutils</shadedPattern>
+                        </relocation>
                     </relocations>
                     <filters>
                         <filter>
@@ -186,6 +190,12 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.19.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cronutils</groupId>
+            <artifactId>cron-utils</artifactId>
+            <version>9.2.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

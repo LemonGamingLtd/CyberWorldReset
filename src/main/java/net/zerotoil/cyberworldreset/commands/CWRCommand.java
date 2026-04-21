@@ -2,6 +2,7 @@ package net.zerotoil.cyberworldreset.commands;
 
 import me.nahu.scheduler.wrapper.runnable.WrappedRunnable;
 import net.zerotoil.cyberworldreset.CyberWorldReset;
+import net.zerotoil.cyberworldreset.objects.TimedReset;
 import net.zerotoil.cyberworldreset.objects.WorldObject;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -54,14 +55,8 @@ public class CWRCommand implements CommandExecutor {
         if (args.length == 2) return argsLen2(sender, player, args);
 
         if (args.length > 3 && args[0].matches("(?i)edit")) {
-            if (args[2].matches("(?i)addTimer")) {
-
-                String time = args[3];
-                if (args.length > 4) time = time + " " + args[4];
-                if (args.length == 6) time = time + " " + args[5];
-                if (args.length > 4 && args.length < 7) {
-                    return addTimer(player, args[1], time);
-                }
+            if (args[2].matches("(?i)addCron")) {
+                return addCron(player, args[1], convertToString(args));
             }
 
             if (args[2].matches("(?i)addMessage")) {
@@ -119,8 +114,8 @@ public class CWRCommand implements CommandExecutor {
 
             sender.sendMessage(main.langUtils().getColor("&b&lCyber&f&lWorldReset &fv" + main.getDescription().getVersion() + " &7(&7&nhttps://bit.ly/2YSlqYq&7).", false));
             sender.sendMessage(main.langUtils().getColor("&fDeveloped by &b" + main.getAuthors() + "&f.", false));
-            sender.sendMessage(main.langUtils().getColor("&7Easily regenerate worlds with little to no TPS drop. Simply set up a recursive", false));
-            sender.sendMessage(main.langUtils().getColor("&7timer or a specific time & date you want the world to reset, and you’re all set!", false));
+            sender.sendMessage(main.langUtils().getColor("&7Easily regenerate worlds with little to no TPS drop. Simply set up one or more", false));
+            sender.sendMessage(main.langUtils().getColor("&7cron schedules for each world you want to reset, and you’re all set!", false));
             return true;
 
         }
@@ -217,7 +212,7 @@ public class CWRCommand implements CommandExecutor {
                 case "enablewarning": return enableWarning(player, args[1], args[3]);
                 case "delcommand": return delCommand(player, args[1], args[3]);
                 case "delmessage": return delMessage(player, args[1], args[3]);
-                case "deltimer": return delTimer(player, args[1], args[3]);
+                case "delcron": return delCron(player, args[1], args[3]);
                 case "delwarningmsg": return delWarningMessage(player, args[1], args[3]);
                 case "delwarningtime": return delWarningTime(player, args[1], args[3]);
                 case "setenvironment": return setEnvironment(player, args[1], args[3]);
@@ -253,6 +248,12 @@ public class CWRCommand implements CommandExecutor {
             main.lang().getMsg("invalid-command").send(player, true, new String[]{}, new String[]{});
             return true;
         }
+    }
+
+    private boolean invalidCron(Player player, String cronExpression) {
+        if (TimedReset.isValidCronExpression(cronExpression)) return false;
+        main.lang().getMsg("invalid-cron").send(player, true, new String[]{"cron"}, new String[]{cronExpression});
+        return true;
     }
 
     private boolean regenWorld(Player player, String worldName) {
@@ -354,10 +355,19 @@ public class CWRCommand implements CommandExecutor {
     }
 
     private void infoTimes(Player player, String worldName) {
-        List<String> time = main.worlds().getWorld(worldName).getTime();
+        WorldObject worldObject = main.worlds().getWorld(worldName);
+        List<String> time = worldObject.getTime();
         if (time.isEmpty()) return;
         sendHeader(player, 1);
-        sendList(player, time);
+        for (int i = 0; i < time.size(); i++) {
+            String cron = time.get(i);
+            TimedReset timedReset = worldObject.getTimedResets().get(cron);
+            String value = cron;
+            if (timedReset != null) {
+                value += " (next in " + formatShortDuration(timedReset.timeToReset()) + ")";
+            }
+            infoMsg(player, "list-format", new String[]{"id", "value"}, new String[]{i + "", value});
+        }
     }
 
     private void infoMessages(Player player, String worldName) {
@@ -411,6 +421,24 @@ public class CWRCommand implements CommandExecutor {
 
     private void sendList(Player player, List list) {
         for (int i = 0; i < list.size(); i++) infoMsg(player, "list-format", new String[]{"id", "value"}, new String[]{i + "", list.get(i) + ""});
+    }
+
+    private String formatShortDuration(long seconds) {
+        if (seconds <= 0) return "0s";
+
+        long days = seconds / 86400;
+        seconds %= 86400;
+        long hours = seconds / 3600;
+        seconds %= 3600;
+        long minutes = seconds / 60;
+        seconds %= 60;
+
+        List<String> parts = new ArrayList<>();
+        if (days > 0) parts.add(days + "d");
+        if (hours > 0) parts.add(hours + "h");
+        if (minutes > 0) parts.add(minutes + "m");
+        if (seconds > 0 || parts.isEmpty()) parts.add(seconds + "s");
+        return String.join(" ", parts);
     }
 
     private void sendHeader(Player player, int index) {
@@ -477,14 +505,16 @@ public class CWRCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean addTimer(Player player, String worldName, String value) {
+    private boolean addCron(Player player, String worldName, String value) {
         if (noPlayerPerm(player, "admin.edit.timer")) return true;
         if (noSetupsExist(player)) return true;
         if (setupDoesNotExist(player, worldName)) return true;
+        value = value.trim();
+        if (invalidCron(player, value)) return true;
 
         List<String> timers = main.worlds().getWorld(worldName).getTime();
         timers.add(value);
-        if (worldSetting(player, worldName, "settings.time", timers)) {
+        if (worldSetting(player, worldName, "settings.cron", timers)) {
             main.worlds().getWorld(worldName).setTime(timers);
             main.worlds().getWorld(worldName).cancelTimers();
             main.worlds().getWorld(worldName).loadTimedResets();
@@ -629,7 +659,7 @@ public class CWRCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean delTimer(Player player, String worldName, String value) {
+    private boolean delCron(Player player, String worldName, String value) {
         if (noPlayerPerm(player, "admin.edit.timer")) return true;
         if (main.worlds().isWorldResetting()) {
             main.lang().getMsg("resetting-error").send(player, true, new String[]{}, new String[]{});
@@ -644,7 +674,7 @@ public class CWRCommand implements CommandExecutor {
             return true;
         }
         timers.remove(number);
-        if (worldSetting(player, worldName, "settings.time", timers)) {
+        if (worldSetting(player, worldName, "settings.cron", timers)) {
             main.worlds().cancelTimers();
             main.loadCache();
             infoTimes(player, worldName);

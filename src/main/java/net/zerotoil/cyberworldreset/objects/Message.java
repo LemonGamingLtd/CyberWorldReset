@@ -39,7 +39,7 @@ public class Message {
             }
         }
         if ((player == null) || !player.isOnline()) {
-            Bukkit.getLogger().info(editedMessage);
+            main.getLogger().info(ChatColor.stripColor(editedMessage));
             return;
         }
         if (addPrefix) editedMessage = main.lang().getPrefix() + editedMessage;

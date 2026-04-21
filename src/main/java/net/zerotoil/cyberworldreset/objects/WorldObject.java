@@ -36,7 +36,7 @@ public class WorldObject {
     private boolean lastSaved;
     private String worldName; // req
     private World world; // req, based off of worldName
-    private List<String> time; // not req
+    private List<String> time; // cron expressions
     private List<String> message; // not req
     private Long seed; // not req, use default
     private boolean randomSeed;
@@ -87,7 +87,7 @@ public class WorldObject {
         lastSaved = false;
         this.worldName = worldName;
         world = Bukkit.getWorld(worldName);
-        time = null;
+        time = new ArrayList<>();
         message = null;
         assert world != null;
         seed = world.getSeed();
@@ -221,7 +221,11 @@ public class WorldObject {
         }
 
         // ultra fast chunk loading
-        if (main.config().getLoadingType().matches("(?i)ULTRA-FAST")) getWorld().loadChunk(getWorld().getSpawnLocation().getChunk());
+        if (main.config().getLoadingType().matches("(?i)ULTRA-FAST")) {
+            WorldUtils.getChunkAt(getWorld().getSpawnLocation()).thenAccept(chunk -> {
+                if (chunk != null) chunk.addPluginChunkTicket(main);
+            });
+        }
 
         // fast, normal, safe, ultra-safe chunk loading
         if (main.config().getLoadingType().matches("(?i)FAST|NORMAL|SAFE|ULTRA-SAFE"))
@@ -583,9 +587,17 @@ public class WorldObject {
     }
 
     public void loadTimedResets() {
+        timedResets.clear();
         if (!enabled) return;
+        if (time == null) return;
         if (time.isEmpty()) return;
-        for (String i : time) timedResets.put(i, new TimedReset(main, worldName, i, warningTime));
+        for (String i : time) {
+            if (!TimedReset.isValidCronExpression(i)) {
+                main.getLogger().warning("Skipping invalid cron expression \"" + i + "\" for world \"" + worldName + "\".");
+                continue;
+            }
+            timedResets.put(i, new TimedReset(main, worldName, i, warningTime));
+        }
     }
 
     public void sendWarning(String unformatted) {

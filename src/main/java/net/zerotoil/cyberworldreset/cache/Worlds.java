@@ -64,10 +64,10 @@ public class Worlds {
                 WorldObject worldObject = new WorldObject(main, worldName);
                 String settings = worldName + ".settings.";
 
-                // intervals/times
+                // warn for legacy schedule configs
                 if (isSet(settings + "time")) {
 
-                    worldObject.setTime(config.getStringList("worlds." + settings + "time"));
+                    main.getLogger().warning("World \"" + worldName + "\" still uses legacy settings.time. Rename it to settings.cron with 5-field cron expressions.");
 
                 }
 
@@ -131,7 +131,10 @@ public class Worlds {
 
                         worldObject.setWarningEnabled(true);
 
-                        if (isSet(settings + "warning.message")) worldObject.setWarningMessage(main.langUtils().convertList(config, "worlds." + settings + "warning.message"));
+                        String warningPath = null;
+                        if (isSet(settings + "warning.message")) warningPath = "worlds." + settings + "warning.message";
+                        else if (isSet(settings + "warning.warning")) warningPath = "worlds." + settings + "warning.warning";
+                        if (warningPath != null) worldObject.setWarningMessage(main.langUtils().convertList(config, warningPath));
 
                         if (isSet(settings + "warning.time")) worldObject.setWarningTime(config.getLongList("worlds." + settings + "warning.time"));
 
@@ -164,8 +167,8 @@ public class Worlds {
 
                 }
 
-                if (isSet(settings + "time")) {
-                    worldObject.setTime(main.langUtils().convertList(config, "worlds." + settings + "time"));
+                if (isSet(settings + "cron")) {
+                    worldObject.setTime(main.langUtils().convertList(config, "worlds." + settings + "cron"));
                 }
 
                 if (isSet(worldName + ".last-saved")) {
@@ -198,7 +201,7 @@ public class Worlds {
         String warn = s + "warning.";
         cS.set(worldName + ".enabled", false);
         cS.set(worldName + ".last-saved", false);
-        cS.set(s + "time", new String[0]);
+        cS.set(s + "cron", new String[0]);
         cS.set(s + "message", "World {world} has been reset!");
         cS.set(s + "seed", "DEFAULT");
         cS.set(safe + "enabled", false);
@@ -206,7 +209,7 @@ public class Worlds {
         cS.set(safe + "delay", 5);
         cS.set(safe + "spawn", "DEFAULT");
         cS.set(warn + "enabled", false);
-        cS.set(warn + "warning", "&cWarning: resetting the world {world} in {time}.");
+        cS.set(warn + "message", "&cWarning: resetting the world {world} in {time}.");
         cS.set(warn + "time", new int[]{300, 60, 30, 10, 3, 2, 1});
         cS.set(s + "commands", new String[0]);
         try {

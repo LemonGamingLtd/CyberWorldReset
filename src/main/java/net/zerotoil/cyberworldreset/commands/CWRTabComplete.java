@@ -91,8 +91,8 @@ public class CWRTabComplete implements TabCompleter {
                 if (player.hasPermission(editPrefix + "enable")) args2.add("setEnabled");
                 if (player.hasPermission(editPrefix + "lastsaved")) args2.add("enableLastSaved");
                 if (player.hasPermission(editPrefix + "timer")) {
-                    args2.add("addTimer");
-                    args2.add("delTimer");
+                    args2.add("addCron");
+                    args2.add("delCron");
                 }
                 if (player.hasPermission(editPrefix + "seed")) args2.add("setSeed");
                 if (player.hasPermission(editPrefix + "generator")) args2.add("setGenerator");
@@ -138,10 +138,9 @@ public class CWRTabComplete implements TabCompleter {
                     args3.add("<boolean>");
                 }
 
-                if (args[2].matches("(?i)addTimer")) {
-                    String format = "yyyy-MM-dd HH:mm";
-                    args3.add(args[3] + format.substring(args[3].length()));
-                    args3.add("<time format>");
+                if (args[2].matches("(?i)addCron")) {
+                    args3.add("0");
+                    args3.add("<minute>");
                 }
 
                 if (args[2].matches("(?i)setEnvironment")) {
@@ -175,7 +174,7 @@ public class CWRTabComplete implements TabCompleter {
                     args3.add("DEFAULT");
                 }
 
-                if (args[2].matches("(?i)delTimer|delMessage|delCommand|delWarningMSG|delWarningTime")) {
+                if (args[2].matches("(?i)delCron|delMessage|delCommand|delWarningMSG|delWarningTime")) {
                     args3.add("<index>");
                 }
 
@@ -194,9 +193,9 @@ public class CWRTabComplete implements TabCompleter {
                 List<String> args4 = new ArrayList<>();
                 List<String> args4Comp = new ArrayList<>();
 
-                if (args[2].matches("(?i)addTimer")) {
-                    String format = "HH:mm";
-                    args4.add(args[4] + format.substring(args[4].length()));
+                if (args[2].matches("(?i)addCron")) {
+                    args4.add("0");
+                    args4.add("<hour>");
                 }
 
                 if (args[2].matches("(?i)setSafeWorldSpawn")) {
@@ -214,6 +213,11 @@ public class CWRTabComplete implements TabCompleter {
                 List<String> args5 = new ArrayList<>();
                 List<String> args5Comp = new ArrayList<>();
 
+                if (args[2].matches("(?i)addCron")) {
+                    args5.add("1");
+                    args5.add("<day-of-month>");
+                }
+
                 if (args[2].matches("(?i)setSafeWorldSpawn")) {
                     args5.add("<z>");
                 }
@@ -221,6 +225,38 @@ public class CWRTabComplete implements TabCompleter {
                 StringUtil.copyPartialMatches(args[5], args5, args5Comp);
                 Collections.sort(args5Comp);
                 return args5Comp;
+
+            }
+
+            if (args.length == 7) {
+
+                List<String> args6 = new ArrayList<>();
+                List<String> args6Comp = new ArrayList<>();
+
+                if (args[2].matches("(?i)addCron")) {
+                    args6.add("*");
+                    args6.add("<month>");
+                }
+
+                StringUtil.copyPartialMatches(args[6], args6, args6Comp);
+                Collections.sort(args6Comp);
+                return args6Comp;
+
+            }
+
+            if (args.length == 8) {
+
+                List<String> args7 = new ArrayList<>();
+                List<String> args7Comp = new ArrayList<>();
+
+                if (args[2].matches("(?i)addCron")) {
+                    args7.add("*");
+                    args7.add("<day-of-week>");
+                }
+
+                StringUtil.copyPartialMatches(args[7], args7, args7Comp);
+                Collections.sort(args7Comp);
+                return args7Comp;
 
             }
 

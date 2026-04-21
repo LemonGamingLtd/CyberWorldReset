@@ -66,11 +66,13 @@ public class WorldUtils {
     }
 
     public static CompletableFuture<Chunk> getChunkAt(@NotNull Location location) {
-        if (location.getWorld() == null) {
+        World world = location.getWorld();
+        if (world == null) {
             return CompletableFuture.completedFuture(null);
         }
-        final Chunk chunk = location.getChunk();
-        return getChunkAt(location.getWorld(), chunk.getX(), chunk.getZ());
+        int chunkX = blockToSectionCoord(location.getBlockX());
+        int chunkZ = blockToSectionCoord(location.getBlockZ());
+        return getChunkAt(world, chunkX, chunkZ);
     }
 
     public static CompletableFuture<Chunk> getChunkAt(@NotNull World world, int chunkX, int chunkZ) {
